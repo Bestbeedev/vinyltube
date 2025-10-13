@@ -1,103 +1,456 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useEffect } from 'react';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge, Moon, Sun, Monitor } from 'lucide-react';
+import { ThemeProvider, useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import VideoForm from '@/components/partials/video-form';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+
+const staggerContainer = {
+    initial: { opacity: 1 },
+    animate: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.2
+        }
+    }
+};
+
+const scaleIn = {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { duration: 0.6, ease: "easeOut" }
+};
+
+
+function ThemeToggle() {
+    const { setTheme, theme } = useTheme();
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-neutral-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm hover:bg-white dark:hover:bg-neutral-700/50">
+                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span className="sr-only">Changer le thème</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="border-neutral-200 dark:border-neutral-700 backdrop-blur-sm">
+                <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer gap-2">
+                    <Sun className="h-4 w-4" />
+                    Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer gap-2">
+                    <Moon className="h-4 w-4" />
+                    Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer gap-2">
+                    <Monitor className="h-4 w-4" />
+                    System
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function Header() {
+    const { scrollY } = useScroll();
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useMotionValueEvent(scrollY, "change", (latest) => {
+        setIsScrolled(latest > 50);
+    });
+
+    return (
+        <motion.header
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+                    ? 'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-700/50 shadow-sm'
+                    : 'bg-transparent'
+                }`}
+        >
+            <div className="container mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="p-2 bg-amber-100/80 dark:bg-amber-900/30 rounded-xl border border-amber-200/50 dark:border-amber-800/50 backdrop-blur-sm"
+                        >
+                            <GalleryVerticalEnd className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                        </motion.div>
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                        >
+                            <span className="text-2xl font-serif font-bold bg-gradient-to-r from-amber-600 to-amber-800 dark:from-amber-400 dark:to-amber-300 bg-clip-text text-transparent">
+                                VynilTube
+                            </span>
+                            <div className="text-xs text-amber-600/80 dark:text-amber-400/80 font-medium -mt-1">
+                                préserver l'essentiel
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    <div className="flex items-center space-x-6">
+                        <nav className="hidden md:flex space-x-8">
+                            <motion.a
+                                href="#features"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium"
+                            >
+                                L'expérience
+                            </motion.a>
+                            <motion.a
+                                href="#how-it-works"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium"
+                            >
+                                L'alchimie
+                            </motion.a>
+                        </nav>
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            <ThemeToggle />
+                        </motion.div>
+                    </div>
+                </div>
+            </div>
+        </motion.header>
+    );
+}
+
+function LandingContent() {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-amber-50/30 to-neutral-100/80 dark:from-neutral-900 dark:via-amber-900/5 dark:to-neutral-800/95 text-neutral-900 dark:text-neutral-100 transition-colors">
+            {/* Header Fixe */}
+            <Header />
+
+            {/* Hero Section avec padding pour compenser le header fixe */}
+            <section className="pt-32 pb-20 px-6">
+                <div className="max-w-4xl mx-auto text-center">
+                    {/* Badge élégant */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 60 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        className="inline-flex items-center space-x-2 mb-8 px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-amber-200/50 dark:border-amber-800/30 backdrop-blur-sm shadow-sm"
+                    >
+                        <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                            L'art de la conservation numérique
+                        </span>
+                    </motion.div>
+
+                    {/* Titre principal */}
+                    <motion.h1
+                        initial={{ opacity: 0, y: 60 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+                        className="text-5xl md:text-7xl font-serif font-bold mb-8 leading-tight"
+                    >
+                        <span className="bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 dark:from-amber-400 dark:via-amber-300 dark:to-amber-200 bg-clip-text text-transparent">
+                            Collectionnez
+                        </span>
+                        <br />
+                        <span className="text-neutral-700 dark:text-neutral-200">
+                            l'éphémère
+                        </span>
+                    </motion.h1>
+
+                    {/* Sous-titre */}
+                    <motion.p
+                        initial={{ opacity: 0, y: 60 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                        className="text-xl text-neutral-600 dark:text-neutral-300 mb-12 max-w-2xl mx-auto leading-relaxed"
+                    >
+                        Transformez vos vidéos YouTube en pièces de collection raffinées.
+                        Une expérience consciente pour ceux qui valorisent le contenu hors-ligne.
+                    </motion.p>
+
+                    {/* Formulaire de recherche */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 60 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+                    >
+                        <VideoForm />
+                    </motion.div>
+
+                    {/* Indicateurs de valeur */}
+                    <motion.div
+                        initial="initial"
+                        animate="animate"
+                        variants={staggerContainer}
+                        className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-2xl mx-auto mt-16"
+                    >
+                        {[
+                            {
+                                icon: Target,
+                                label: 'Extraits précis',
+                                desc: 'Découpage sur mesure',
+                                color: 'text-red-500 dark:text-red-400'
+                            },
+                            {
+                                icon: AudioLines,
+                                label: 'Qualité audio',
+                                desc: 'Préservation parfaite',
+                                color: 'text-blue-500 dark:text-blue-400'
+                            },
+                            {
+                                icon: Gauge,
+                                label: 'Process raffiné',
+                                desc: 'Expérience fluide',
+                                color: 'text-emerald-500 dark:text-emerald-400'
+                            }
+                        ].map((item, index) => (
+                            <motion.div
+                                key={index}
+                                variants={scaleIn}
+                                whileHover={{ scale: 1.05 }}
+                                className="text-center p-6 bg-white/50 dark:bg-neutral-800/50 rounded-2xl border border-neutral-100 dark:border-neutral-700 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
+                            >
+                                <div className="w-12 h-12 mx-auto mb-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-center justify-center">
+                                    <item.icon className={`w-6 h-6 ${item.color}`} />
+                                </div>
+                                <div className="font-semibold text-neutral-800 dark:text-neutral-200 mb-1">{item.label}</div>
+                                <div className="text-sm text-neutral-500 dark:text-neutral-400">{item.desc}</div>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section id="features" className="container mx-auto px-6 py-20 dark:bg-neutral-800/30 border  rounded-2xl bg-gray-50/80 ">
+                <div className="max-w-6xl mx-auto ">
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.6 }}
+                        className="text-center mb-16 "
+                    >
+                        <h2 className="text-4xl font-serif font-bold mb-4">
+                            Une expérience <span className="text-amber-600 dark:text-amber-400">consciente</span>
+                        </h2>
+                        <p className="text-lg text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto">
+                            Plus qu'un simple téléchargeur, un atelier numérique pour les esprits curieux
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial="initial"
+                        whileInView="animate"
+                        viewport={{ once: true, margin: "-50px" }}
+                        variants={staggerContainer}
+                        className="grid lg:grid-cols-3 gap-8"
+                    >
+                        {[
+                            {
+                                icon: Download,
+                                title: 'Téléchargement intelligent',
+                                description: 'Audio MP3 haute qualité ou vidéo HD préservée. Choisissez uniquement ce qui compte.',
+                                color: 'text-blue-500 dark:text-blue-400'
+                            },
+                            {
+                                icon: Scissors,
+                                title: 'Le sillon numérique',
+                                description: 'Extrayez des passages spécifiques avec la précision dun graveur de vinyle.',
+                                color: 'text-amber-500 dark:text-amber-400'
+                            },
+                            {
+                                icon: Archive,
+                                title: 'Votre médiathèque',
+                                description: 'Collectionnez et organisez vos extraits dans un espace personnel raffiné.',
+                                color: 'text-emerald-500 dark:text-emerald-400'
+                            }
+                        ].map((feature, index) => (
+                            <motion.div
+                                key={index}
+                                variants={scaleIn}
+                                whileHover={{ y: -8 }}
+                                className="group p-8 bg-white dark:bg-neutral-800 rounded-3xl border border-neutral-100 dark:border-neutral-700 hover:border-amber-200 dark:hover:border-amber-800 transition-all duration-300 hover:shadow-xl"
+                            >
+                                <motion.div
+                                    className={`w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+                                    whileHover={{ rotate: 5 }}
+                                >
+                                    <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                                </motion.div>
+                                <h3 className="text-xl font-semibold mb-4 text-neutral-800 dark:text-neutral-200">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                                    {feature.description}
+                                </p>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* How it works */}
+            <section id="how-it-works" className="container border border-amber-100 dark:border-amber-800/30 mx-auto px-6 py-20 bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl my-8">
+                <div className="max-w-4xl mx-auto text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <h2 className="text-4xl font-serif font-bold mb-4">
+                            L'alchimie <span className="text-amber-600 dark:text-amber-400">VynilTube</span>
+                        </h2>
+                        <p className="text-lg text-neutral-600 dark:text-neutral-300 mb-12 max-w-2xl mx-auto">
+                            Un processus raffiné en quatre actes simples
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial="initial"
+                        whileInView="animate"
+                        viewport={{ once: true, margin: "-50px" }}
+                        variants={staggerContainer}
+                        className="grid md:grid-cols-4 gap-8 relative"
+                    >
+                        {/* Ligne de connexion */}
+                        <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-amber-200 dark:bg-amber-800/50 -z-10" />
+
+                        {[
+                            {
+                                step: '01',
+                                title: 'Coller',
+                                desc: 'Le lien précieux',
+                                icon: ClipboardPaste,
+                                color: 'text-blue-500'
+                            },
+                            {
+                                step: '02',
+                                title: 'Sélectionner',
+                                desc: 'Format & extrait',
+                                icon: Settings,
+                                color: 'text-amber-500'
+                            },
+                            {
+                                step: '03',
+                                title: 'Extraire',
+                                desc: 'Qualité préservée',
+                                icon: Zap,
+                                color: 'text-emerald-500'
+                            },
+                            {
+                                step: '04',
+                                title: 'Archiver',
+                                desc: 'Dans votre collection',
+                                icon: Library,
+                                color: 'text-purple-500'
+                            }
+                        ].map((item, index) => (
+                            <motion.div
+                                key={item.step}
+                                variants={scaleIn}
+                                whileHover={{ scale: 1.05 }}
+                                className="relative"
+                            >
+                                <div className="w-20 h-20 mx-auto mb-4 bg-white dark:bg-neutral-800 rounded-2xl border border-amber-200 dark:border-amber-800 shadow-sm flex items-center justify-center">
+                                    <item.icon className={`w-8 h-8 ${item.color} dark:${item.color}-400`} />
+                                </div>
+                                <div className="w-8 h-8 mx-auto mb-3 bg-amber-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                    {item.step}
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2 text-neutral-800 dark:text-neutral-200">{item.title}</h3>
+                                <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.desc}</p>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* CTA Section */}
+            <section className="container mx-auto px-6 py-20">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6 }}
+                    className="max-w-3xl mx-auto text-center bg-gradient-to-r from-amber-400/10 to-amber-600/10 dark:from-amber-400/5 dark:to-amber-600/5 rounded-3xl p-16 border border-amber-200 dark:border-amber-800/30"
+                >
+                    <h2 className="text-4xl font-serif font-bold mb-6">
+                        Prêt à collectionner <span className="text-amber-600 dark:text-amber-400">l'éphémère</span> ?
+                    </h2>
+                    <p className="text-xl text-neutral-600 dark:text-neutral-300 mb-8 max-w-xl mx-auto">
+                        Rejoignez les esprits curieux qui transforment le contenu numérique en pièces de collection durables.
+                    </p>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all inline-flex items-center space-x-3 shadow-lg hover:shadow-xl"
+                    >
+                        <Play className="w-5 h-5" />
+                        <span>Commencer l'expérience</span>
+                    </motion.button>
+                </motion.div>
+            </section>
+
+            {/* Footer */}
+            <footer className="container mx-auto px-6 py-12 border-t border-neutral-200 dark:border-neutral-700">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="flex flex-col md:flex-row justify-between items-center"
+                >
+                    <div className="flex items-center space-x-3 mb-4 md:mb-0">
+                        <GalleryVerticalEnd className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                        <span className="font-serif font-bold text-lg text-neutral-800 dark:text-neutral-200">VynilTube</span>
+                    </div>
+                    <div className="text-neutral-500 dark:text-neutral-400 text-center md:text-right">
+                        <div className="text-sm">
+                            Fait avec soin pour les amateurs de contenu précieux • 2024
+                        </div>
+                        <div className="text-xs mt-1 text-neutral-400 dark:text-neutral-500">
+                            Préservation numérique consciente
+                        </div>
+                    </div>
+                </motion.div>
+            </footer>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
+}
+
+export default function LandingPage() {
+    return (
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <LandingContent />
+        </ThemeProvider>
+    );
 }
