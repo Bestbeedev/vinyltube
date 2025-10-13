@@ -1,36 +1,69 @@
-import ytdl from "ytdl-core";
+export const runtime = "nodejs";
 
-export async function POST(req) {
+import { NextResponse } from "next/server";
+import ytdl, { videoFormat } from "ytdl-core";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import { PassThrough } from "stream";
+
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+
+type DownloadRequest = { url: string; itag?: string; format?: string };
+
+export async function POST(req: Request) {
   try {
-    const { url, format } = await req.json();
+    const { url, itag, format }: DownloadRequest = await req.json();
 
-    if (!ytdl.validateURL(url)) {
-      return new Response(JSON.stringify({ error: "URL invalide" }), { status: 400 });
+    if (!url || !ytdl.validateURL(url)) {
+      return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
     }
 
     const info = await ytdl.getInfo(url);
-    const title = info.videoDetails.title.replace(/[^\w\s]/gi, "_");
 
-    const filter = format === "audio"
-      ? "audioonly"
-      : "videoandaudio";
+    // Choisir le format
+    let chosenVideo: videoFormat | undefined;
+    if (itag) {
+      chosenVideo = info.formats.find(f => f.itag.toString() === itag);
+    } else if (format === "audio") {
+      chosenVideo = ytdl.chooseFormat(info.formats, { quality: "highestaudio" });
+    } else {
+      // Choisir le meilleur format audio+vidéo
+      chosenVideo = ytdl.chooseFormat(info.formats, { quality: "highestvideo" });
+    }
 
-    const itag = format === "720p"
-      ? 22
-      : format === "1080p"
-      ? 137
-      : 18;
+    if (!chosenVideo) {
+      return NextResponse.json({ error: "Format non disponible" }, { status: 400 });
+    }
 
-    const stream = ytdl(url, { quality: itag, filter });
+    const sanitizedTitle = info.videoDetails.title.replace(/[^\w\s]/gi, "");
+    const fileName = `${sanitizedTitle || "video"}.${format === "audio" ? "mp3" : "mp4"}`;
 
-    const headers = {
-      "Content-Disposition": `attachment; filename="${title}.mp4"`,
+    const videoStream = ytdl(url, { format: chosenVideo });
+    const audioStream = format === "audio" ? videoStream : ytdl(url, { quality: "highestaudio" });
+
+    const passthrough = new PassThrough();
+
+    // Fusion si vidéo + audio séparés
+    if (!chosenVideo.hasAudio && format !== "audio") {
+      ffmpeg()
+        .input(videoStream)
+        .input(audioStream)
+        .outputOptions("-c:v copy", "-c:a aac")
+        .format("mp4")
+        .pipe(passthrough);
+    } else {
+      videoStream.pipe(passthrough);
+    }
+
+    const headers = new Headers({
       "Content-Type": "video/mp4",
-    };
+      "Content-Disposition": `attachment; filename="${fileName}"`,
+    });
 
-    return new Response(stream, { headers });
-  } catch (err) {
-    console.error("Erreur:", err);
-    return new Response(JSON.stringify({ error: "Erreur lors du téléchargement" }), { status: 500 });
+    return new Response(passthrough, { headers });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur téléchargement";
+    console.error("Erreur /api/download:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
