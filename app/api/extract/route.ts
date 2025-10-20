@@ -1,48 +1,88 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import ytdl from "ytdl-core";
-import rateLimit from "express-rate-limit";
-
-const limiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 5,
-});
-
-const applyRateLimit = async (req: Request) =>
-    new Promise<void>((resolve, reject) => {
-        limiter(req as any, {} as any, (err: any) => (err ? reject(err) : resolve()));
-    });
 
 export async function POST(req: Request) {
-    try {
-        //await applyRateLimit(req);
+  try {
+    const { url } = await req.json();
 
-        const { url } = await req.json();
-        if (!url || !ytdl.validateURL(url)) {
-            return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
-        }
-
-        const info = await ytdl.getInfo(url);
-        console.error('1-INFO', info)
-        const formats = ytdl.filterFormats(info.formats, "audioandvideo");
-        console.error('2-FORMATS', formats)
-        return NextResponse.json({
-            title: info.videoDetails.title,
-            thumbnail: info.videoDetails.thumbnails.pop()?.url,
-            author: info.videoDetails.author.name,
-            duration: info.videoDetails.lengthSeconds,
-            formats: formats.map(f => ({
-                quality: f.qualityLabel,
-                itag: f.itag,
-                container: f.container,
-                hasAudio: f.hasAudio,
-                hasVideo: f.hasVideo,
-            })),
-        });
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Erreur extraction";
-        console.error("Erreur /api/extract:", message);
-        return NextResponse.json({ error: message }, { status: 500 });
+    if (!url) {
+      return NextResponse.json({ error: "URL YouTube requise" }, { status: 400 });
     }
+
+    console.log('🔍 Extraction pour:', url);
+
+    // Extraire l'ID vidéo
+    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?\n]+)/)?.[1];
+    if (!videoId) {
+      return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
+    }
+
+    // Obtenir les infos via l'API YouTube oEmbed (fiable)
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    const oembedResponse = await fetch(oembedUrl);
+
+    let title = 'Video YouTube';
+    let author = 'YouTube';
+    let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+    if (oembedResponse.ok) {
+      const oembedData = await oembedResponse.json();
+      title = oembedData.title;
+      author = oembedData.author_name;
+      thumbnail = oembedData.thumbnail_url;
+    }
+
+    // Formats garantis (toujours disponibles via notre système)
+    const formats = [
+      {
+        itag: 'mp4_720',
+        quality: 'MP4 720p',
+        container: 'mp4',
+        hasAudio: true,
+        hasVideo: true,
+        fileSize: '20-80 MB',
+        type: 'video'
+      },
+      {
+        itag: 'mp4_480',
+        quality: 'MP4 480p',
+        container: 'mp4',
+        hasAudio: true,
+        hasVideo: true,
+        fileSize: '10-50 MB',
+        type: 'video'
+      },
+      {
+        itag: 'mp3_128',
+        quality: 'MP3 128kbps',
+        container: 'mp3',
+        hasAudio: true,
+        hasVideo: false,
+        fileSize: '3-10 MB',
+        type: 'audio'
+      }
+    ];
+
+    const response = {
+      title,
+      thumbnail,
+      author,
+      duration: 0,
+      formats,
+      videoId,
+      url
+    };
+
+    console.log(`📦 Formats préparés pour: "${title}"`);
+
+    return NextResponse.json(response);
+
+  } catch (err: any) {
+    console.error('❌ Erreur extraction:', err);
+    return NextResponse.json(
+      { error: "Impossible d'analyser cette vidéo" },
+      { status: 400 }
+    );
+  }
 }

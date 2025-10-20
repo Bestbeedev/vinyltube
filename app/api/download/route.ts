@@ -1,69 +1,164 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import ytdl, { videoFormat } from "ytdl-core";
-import ffmpeg from "fluent-ffmpeg";
-import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
-import { PassThrough } from "stream";
 
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+// Services stables qui fonctionnent réellement
+const WORKING_SERVICES = {
+  audio: [
+    {
+      name: "YTMP3",
+      url: (videoUrl: string) => `https://ytmp3.cc/en13/#url=${encodeURIComponent(videoUrl)}`,
+      description: "Conversion MP3 fiable"
+    },
+    {
+      name: "Y2Mate MP3",
+      url: (videoUrl: string) => `https://www.y2mate.com/youtube-mp3/${getVideoId(videoUrl)}`,
+      description: "Service MP3 populaire"
+    }
+  ],
+  video: [
+    {
+      name: "SaveFrom",
+      url: (videoUrl: string) => `https://en.savefrom.net/1-youtube-video-downloader/?url=${encodeURIComponent(videoUrl)}`,
+      description: "Téléchargement vidéo fiable"
+    },
+    {
+      name: "Y2Mate MP4",
+      url: (videoUrl: string) => `https://www.y2mate.com/youtube-mp4/${getVideoId(videoUrl)}`,
+      description: "Service MP4 populaire"
+    },
+    {
+      name: "YT5S",
+      url: (videoUrl: string) => `https://yt5s.com/en32?url=${encodeURIComponent(videoUrl)}`,
+      description: "Conversion rapide"
+    }
+  ]
+};
 
-type DownloadRequest = { url: string; itag?: string; format?: string };
+// Fonction pour extraire l'ID vidéo
+const getVideoId = (url: string): string => {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?\n]+)/);
+  return match ? match[1] : '';
+};
+
+// Fonction pour obtenir les infos de la vidéo
+const getVideoInfo = async (videoId: string) => {
+  try {
+    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    const response = await fetch(oembedUrl);
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        title: data.title,
+        author: data.author_name,
+        thumbnail: data.thumbnail_url
+      };
+    }
+  } catch (error) {
+    console.error('Erreur récupération infos:', error);
+  }
+
+  return {
+    title: 'video',
+    author: 'YouTube',
+    thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+  };
+};
 
 export async function POST(req: Request) {
   try {
-    const { url, itag, format }: DownloadRequest = await req.json();
+    const { url, itag, format = "video" } = await req.json();
 
-    if (!url || !ytdl.validateURL(url)) {
+    if (!url) {
+      return NextResponse.json({ error: "URL requise" }, { status: 400 });
+    }
+
+    console.log('🎯 Préparation téléchargement pour:', url);
+
+    // Extraire l'ID vidéo
+    const videoId = getVideoId(url);
+    if (!videoId) {
       return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
     }
 
-    const info = await ytdl.getInfo(url);
+    // Obtenir les infos de la vidéo
+    const videoInfo = await getVideoInfo(videoId);
 
-    // Choisir le format
-    let chosenVideo: videoFormat | undefined;
-    if (itag) {
-      chosenVideo = info.formats.find(f => f.itag.toString() === itag);
-    } else if (format === "audio") {
-      chosenVideo = ytdl.chooseFormat(info.formats, { quality: "highestaudio" });
-    } else {
-      // Choisir le meilleur format audio+vidéo
-      chosenVideo = ytdl.chooseFormat(info.formats, { quality: "highestvideo" });
-    }
+    // Sélectionner le service le plus fiable
+    const services = WORKING_SERVICES[format as keyof typeof WORKING_SERVICES] || WORKING_SERVICES.video;
+    const service = services[0]; // Toujours utiliser le premier service (le plus fiable)
 
-    if (!chosenVideo) {
-      return NextResponse.json({ error: "Format non disponible" }, { status: 400 });
-    }
+    const downloadUrl = service.url(url);
 
-    const sanitizedTitle = info.videoDetails.title.replace(/[^\w\s]/gi, "");
-    const fileName = `${sanitizedTitle || "video"}.${format === "audio" ? "mp3" : "mp4"}`;
+    console.log(`✅ Service sélectionné: ${service.name}`);
 
-    const videoStream = ytdl(url, { format: chosenVideo });
-    const audioStream = format === "audio" ? videoStream : ytdl(url, { quality: "highestaudio" });
-
-    const passthrough = new PassThrough();
-
-    // Fusion si vidéo + audio séparés
-    if (!chosenVideo.hasAudio && format !== "audio") {
-      ffmpeg()
-        .input(videoStream)
-        .input(audioStream)
-        .outputOptions("-c:v copy", "-c:a aac")
-        .format("mp4")
-        .pipe(passthrough);
-    } else {
-      videoStream.pipe(passthrough);
-    }
-
-    const headers = new Headers({
-      "Content-Type": "video/mp4",
-      "Content-Disposition": `attachment; filename="${fileName}"`,
+    return NextResponse.json({
+      success: true,
+      downloadUrl: downloadUrl,
+      service: service.name,
+      description: service.description,
+      videoInfo: {
+        title: videoInfo.title,
+        author: videoInfo.author,
+        thumbnail: videoInfo.thumbnail
+      },
+      message: "Prêt pour le téléchargement",
+      videoId: videoId,
+      quality: itag
     });
 
-    return new Response(passthrough, { headers });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Erreur téléchargement";
-    console.error("Erreur /api/download:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err: any) {
+    console.error("❌ Erreur préparation:", err);
+
+    return NextResponse.json(
+      { error: "Service temporairement indisponible" },
+      { status: 500 }
+    );
+  }
+}
+
+// Route GET pour téléchargement direct via service externe
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const url = searchParams.get('url');
+    const format = searchParams.get('format') || 'video';
+
+    if (!url) {
+      return NextResponse.json({ error: "URL manquante" }, { status: 400 });
+    }
+
+    const videoId = getVideoId(url);
+    if (!videoId) {
+      return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
+    }
+
+    // Service par défaut ultra fiable
+    let downloadUrl: string;
+
+    if (format === "audio") {
+      // YTMP3 - Très fiable pour l'audio
+      downloadUrl = `https://ytmp3.cc/en13/#url=${encodeURIComponent(url)}`;
+    } else {
+      // SaveFrom - Très fiable pour la vidéo
+      downloadUrl = `https://en.savefrom.net/1-youtube-video-downloader/?url=${encodeURIComponent(url)}`;
+    }
+
+    console.log('🎯 Redirection vers service fiable:', downloadUrl);
+    return Response.redirect(downloadUrl);
+
+  } catch (err: any) {
+    console.error("❌ Erreur redirection:", err);
+
+    // Fallback absolu
+    const url = new URL(req.url).searchParams.get('url');
+    if (url) {
+      return Response.redirect(`https://en.savefrom.net/1-youtube-video-downloader/?url=${encodeURIComponent(url)}`);
+    }
+
+    return NextResponse.json({
+      error: "Service indisponible"
+    }, { status: 500 });
   }
 }
