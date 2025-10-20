@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge, Moon, Sun, Monitor } from 'lucide-react';
+import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge, Moon, Sun, Monitor, Router } from 'lucide-react';
 import { ThemeProvider, useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import HomeMotion from '@/components/partials/animtion-home'
 import VideoForm from '@/components/partials/video-form';
+import { useRouter } from 'next/navigation';
 
 
 const staggerContainer = {
@@ -59,6 +61,7 @@ function ThemeToggle() {
 function Header() {
     const { scrollY } = useScroll();
     const [isScrolled, setIsScrolled] = useState(false);
+    const router = useRouter();
 
     useMotionValueEvent(scrollY, "change", (latest) => {
         setIsScrolled(latest > 50);
@@ -70,13 +73,14 @@ function Header() {
             animate={{ y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? 'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-700/50 shadow-sm'
-                    : 'bg-transparent'
+                ? 'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-700/50 shadow-sm'
+                : 'bg-transparent border-b'
                 }`}
         >
             <div className="container mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    {/* Logo VynilTube */}
+                    <div onClick={()=>router.push('/')} className="flex items-center space-x-3">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -138,12 +142,18 @@ function Header() {
 function LandingContent() {
     const [mounted, setMounted] = useState(false);
 
+
     useEffect(() => {
-        setMounted(true);
+        let t = setInterval(() => {
+            setMounted(true);
+        }, 7000);
+        return () => {
+           clearInterval(t)
+        }
     }, []);
 
     if (!mounted) {
-        return null;
+        return <HomeMotion />;
     }
 
     return (
@@ -338,7 +348,7 @@ function LandingContent() {
                         whileInView="animate"
                         viewport={{ once: true, margin: "-50px" }}
                         variants={staggerContainer}
-                        className="grid md:grid-cols-4 gap-8 relative"
+                        className="grid md:grid-cols-4 gap-8 max-md:grid-cols-2 relative"
                     >
                         {/* Ligne de connexion */}
                         <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-amber-200 dark:bg-amber-800/50 -z-10" />
@@ -429,13 +439,18 @@ function LandingContent() {
                     transition={{ duration: 0.6 }}
                     className="flex flex-col md:flex-row justify-between items-center"
                 >
-                    <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                        <GalleryVerticalEnd className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                        <span className="font-serif font-bold text-lg text-neutral-800 dark:text-neutral-200">VynilTube</span>
+                    <div className="flex flex-col items-start space-x-3 mb-4 md:mb-0">
+                        <div className='flex items-center space-x-3'>
+                            <GalleryVerticalEnd className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                            <span className="font-serif font-bold text-lg text-neutral-800 dark:text-neutral-200">VynilTube</span>
+                        </div>
+                        <div className="text-xs mt-1 text-neutral-400 dark:text-neutral-500">
+                            <Button className='hover:cursor-pointer' variant='default'>Developpe par @Bestbeedev</Button>
+                        </div>
                     </div>
                     <div className="text-neutral-500 dark:text-neutral-400 text-center md:text-right">
                         <div className="text-sm">
-                            Fait avec soin pour les amateurs de contenu précieux • 2024
+                            Fait avec soin pour les amateurs de contenu précieux • 2025
                         </div>
                         <div className="text-xs mt-1 text-neutral-400 dark:text-neutral-500">
                             Préservation numérique consciente

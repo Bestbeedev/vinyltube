@@ -102,16 +102,14 @@ export default function RootLayout({
                 className={`${playfairDisplay.variable} ${inter.variable} font-sans antialiased`}
                 suppressHydrationWarning
             >
-
                 {children}
-
                 <Toaster
                     richColors
                     position="top-center"
                     closeButton
-                    expand={true}
+                    expand={false}
                     toastOptions={{
-                        style: { fontSize: "15px", borderRadius: "12px" },
+                        style: { fontSize: "14px", borderRadius: "10px" },
                     }}
                 />
             </body>
