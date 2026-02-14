@@ -284,8 +284,8 @@ function LandingContent() {
                             },
                             {
                                 icon: Archive,
-                                title: 'Votre médiathèque',
-                                description: 'Collectionnez et organisez vos extraits dans un espace personnel raffiné.',
+                                title: 'Votre médiathèque historique',
+                                description: 'Collectionnez et retrouvez vos extraits de fichiers dans un espace personnel raffiné.',
                                 color: 'text-emerald-500 dark:text-emerald-400'
                             }
                         ].map((feature, index) => (
@@ -365,7 +365,7 @@ function LandingContent() {
                             {
                                 step: '04',
                                 title: 'Archiver',
-                                desc: 'Dans votre collection',
+                                desc: 'Dans votre collection historique',
                                 icon: Library,
                                 color: 'text-purple-500'
                             }
