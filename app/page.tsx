@@ -156,7 +156,7 @@ function LandingContent() {
                         initial={{ opacity: 0, y: 60 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="inline-flex items-center space-x-2 mb-8 px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-amber-200/50 dark:border-amber-800/30 backdrop-blur-sm shadow-sm"
+                        className="inline-flex items-center space-x-2 mb-8 px-4 py-3 rounded-2xl bg-white/70 dark:bg-neutral-800/70 border border-amber-200/50 dark:border-amber-800/30 backdrop-blur-sm shadow-lg"
                     >
                         <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         <span className="text-sm font-medium text-amber-700 dark:text-amber-300">

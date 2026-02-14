@@ -123,7 +123,7 @@ export default function VideoForm() {
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="Collez le lien YouTube ici..."
-                            className={`w-full px-6 py-7 bg-white/80 dark:bg-neutral-800/80 border border-neutral-200/60 dark:border-neutral-700/60 rounded-2xl focus:outline-none focus:border-amber-400 dark:focus:border-amber-500 focus:ring-4 focus:ring-amber-100 dark:focus:ring-amber-900/20 transition-all placeholder-neutral-400 dark:placeholder-neutral-500 text-lg shadow-sm backdrop-blur-sm ${
+                            className={`w-full px-6 py-7 bg-white/80 dark:bg-neutral-800/80 border border-neutral-200/60 dark:border-neutral-700/60 rounded-2xl focus:outline-none focus:border-amber-400 dark:focus:border-amber-500 focus:ring-4 focus:ring-amber-100 dark:focus:ring-amber-900/20 transition-all placeholder-neutral-400 dark:placeholder-neutral-500 text-lg shadow-lg backdrop-blur-sm ${
                                 isAutoExtracting ? 'border-amber-300 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-900/20' : ''
                             }`}
                         />
