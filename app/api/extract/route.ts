@@ -1,88 +1,66 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
+import { getBackendUrl } from "@/config/backend";
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json();
+    const { url, fast = false } = await req.json();
 
     if (!url) {
       return NextResponse.json({ error: "URL YouTube requise" }, { status: 400 });
     }
 
-    console.log('🔍 Extraction pour:', url);
+    console.log('🔍 Extraction pour:', url, fast ? '(mode rapide)' : '(mode complet)');
 
-    // Extraire l'ID vidéo
-    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?\n]+)/)?.[1];
+    // Valider l'URL YouTube - regex plus complète pour tous les formats YouTube
+    const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([^&?\n]+)/)?.[1];
     if (!videoId) {
       return NextResponse.json({ error: "URL YouTube invalide" }, { status: 400 });
     }
 
-    // Obtenir les infos via l'API YouTube oEmbed (fiable)
-    const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    const oembedResponse = await fetch(oembedUrl);
+    // Choisir l'endpoint selon le mode
+    const endpoint = fast ? 'EXTRACT_FAST' : 'EXTRACT';
 
-    let title = 'Video YouTube';
-    let author = 'YouTube';
-    let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    // Appeler le backend Python
+    try {
+      const backendResponse = await fetch(getBackendUrl(endpoint), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+        // Timeout adapté selon le mode
+        signal: AbortSignal.timeout(fast ? 15000 : 30000)
+      });
 
-    if (oembedResponse.ok) {
-      const oembedData = await oembedResponse.json();
-      title = oembedData.title;
-      author = oembedData.author_name;
-      thumbnail = oembedData.thumbnail_url;
-    }
-
-    // Formats garantis (toujours disponibles via notre système)
-    const formats = [
-      {
-        itag: 'mp4_720',
-        quality: 'MP4 720p',
-        container: 'mp4',
-        hasAudio: true,
-        hasVideo: true,
-        fileSize: '20-80 MB',
-        type: 'video'
-      },
-      {
-        itag: 'mp4_480',
-        quality: 'MP4 480p',
-        container: 'mp4',
-        hasAudio: true,
-        hasVideo: true,
-        fileSize: '10-50 MB',
-        type: 'video'
-      },
-      {
-        itag: 'mp3_128',
-        quality: 'MP3 128kbps',
-        container: 'mp3',
-        hasAudio: true,
-        hasVideo: false,
-        fileSize: '3-10 MB',
-        type: 'audio'
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Backend error: ${backendResponse.status}`);
       }
-    ];
 
-    const response = {
-      title,
-      thumbnail,
-      author,
-      duration: 0,
-      formats,
-      videoId,
-      url
-    };
+      const data = await backendResponse.json();
+      
+      console.log(`✅ Informations extraites du backend (${fast ? 'rapide' : 'complet'}): "${data.title}"`);
+      
+      return NextResponse.json(data);
 
-    console.log(`📦 Formats préparés pour: "${title}"`);
-
-    return NextResponse.json(response);
+    } catch (backendError) {
+      console.error('❌ Erreur backend Python:', backendError);
+      
+      // Plus de fallback - on dépend uniquement du backend
+      const errorMessage = backendError instanceof Error ? backendError.message : "Backend indisponible";
+      return NextResponse.json(
+        { error: "Le backend de traitement vidéo n'est pas disponible. Veuillez réessayer plus tard." },
+        { status: 503 }
+      );
+    }
 
   } catch (err: any) {
     console.error('❌ Erreur extraction:', err);
     return NextResponse.json(
-      { error: "Impossible d'analyser cette vidéo" },
-      { status: 400 }
+      { error: err.message || "Impossible d'analyser cette vidéo" },
+      { status: 500 }
     );
   }
 }
