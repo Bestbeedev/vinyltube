@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ThemeProvider } from "next-themes";
 import ThemeToggle from '@/components/partials/theme-toggle';
 import HistoryService, { HistoryItem } from '@/lib/history-service';
 
@@ -26,7 +27,7 @@ const scaleIn = {
   transition: { duration: 0.4, ease: "easeOut" }
 };
 
-export default function HistoryPage() {
+function HistoryPageContent() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +115,7 @@ export default function HistoryPage() {
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-700/50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-4">
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-12">
               {/* Logo cliquable vers accueil */}
               <div 
                 onClick={() => window.location.href = '/'}
@@ -190,7 +191,7 @@ export default function HistoryPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 mb-8 px-4"
+          className="flex  sm:flex-row gap-4 mb-8 px-4"
         >
           {/* Barre de recherche */}
           <div className="flex-1 relative">
@@ -405,5 +406,13 @@ export default function HistoryPage() {
       )}
     </div>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <HistoryPageContent />
+    </ThemeProvider>
   );
 }
