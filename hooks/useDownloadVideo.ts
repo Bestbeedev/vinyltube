@@ -187,9 +187,17 @@ export const useDownloadVideo = () => {
 
       // Gérer la réponse du backend Python uniquement
       if (data.downloadUrl) {
+        // Construire l'URL complète du backend pour le téléchargement
+        const backendBaseUrl = 'http://localhost:8000';
+        const fullDownloadUrl = data.downloadUrl.startsWith('/') 
+          ? `${backendBaseUrl}${data.downloadUrl}`
+          : `${backendBaseUrl}/${data.downloadUrl}`;
+        
+        console.log('📥 URL de téléchargement complète:', fullDownloadUrl);
+        
         // Backend nous donne une URL de téléchargement direct
         const link = document.createElement('a');
-        link.href = data.downloadUrl;
+        link.href = fullDownloadUrl;
         link.download = data.filename || `video.${formatType === 'audio' ? 'mp3' : 'mp4'}`;
         document.body.appendChild(link);
         link.click();
@@ -197,8 +205,16 @@ export const useDownloadVideo = () => {
         
         toast.success(`✅ Fichier "${data.filename}" téléchargé avec succès!`);
       } else if (data.fileUrl) {
+        // Construire l'URL complète du backend
+        const backendBaseUrl = 'http://localhost:8000';
+        const fullFileUrl = data.fileUrl.startsWith('/') 
+          ? `${backendBaseUrl}${data.fileUrl}`
+          : `${backendBaseUrl}/${data.fileUrl}`;
+        
+        console.log('📂 URL du fichier complète:', fullFileUrl);
+        
         // Backend sert le fichier directement
-        window.open(data.fileUrl, '_blank');
+        window.open(fullFileUrl, '_blank');
         toast.success(`✅ Fichier prêt: ${data.filename}`);
       } else {
         throw new Error("Aucune URL de téléchargement fournie par le backend");
@@ -228,12 +244,24 @@ export const useDownloadVideo = () => {
       }
       
       if (data.fileUrl) {
+        // Construire l'URL complète du backend
+        const backendBaseUrl = 'http://localhost:8000';
+        const fullFileUrl = data.fileUrl.startsWith('/') 
+          ? `${backendBaseUrl}${data.fileUrl}`
+          : `${backendBaseUrl}/${data.fileUrl}`;
+        
         // Téléchargement direct depuis notre backend
-        window.open(data.fileUrl, '_blank');
+        window.open(fullFileUrl, '_blank');
         toast.success(`✅ Fichier prêt: ${data.filename}`);
       } else if (data.downloadUrl) {
+        // Construire l'URL complète du backend
+        const backendBaseUrl = 'http://localhost:8000';
+        const fullDownloadUrl = data.downloadUrl.startsWith('/') 
+          ? `${backendBaseUrl}${data.downloadUrl}`
+          : `${backendBaseUrl}/${data.downloadUrl}`;
+        
         const link = document.createElement('a');
-        link.href = data.downloadUrl;
+        link.href = fullDownloadUrl;
         link.download = data.filename || `video.${formatType === 'audio' ? 'mp3' : 'mp4'}`;
         document.body.appendChild(link);
         link.click();
