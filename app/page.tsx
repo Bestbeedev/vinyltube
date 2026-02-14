@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge, Moon, Sun, Monitor, Router } from 'lucide-react';
+import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge, Router } from 'lucide-react';
 import { ThemeProvider, useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import HomeMotion from '@/components/partials/animtion-home'
-import VideoForm from '@/components/partials/video-form';
+import HomeMotion from '@/components/partials/animation-home'
+import ThemeToggle from '@/components/partials/theme-toggle';
 import { useRouter } from 'next/navigation';
+import VideoForm from '@/components/partials/video-form';
+import HistoryService from '@/lib/history-service';
 
 
 const staggerContainer = {
@@ -28,36 +29,6 @@ const scaleIn = {
 };
 
 
-function ThemeToggle() {
-    const { setTheme, theme } = useTheme();
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-neutral-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm hover:bg-white dark:hover:bg-neutral-700/50">
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="sr-only">Changer le thème</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-neutral-200 dark:border-neutral-700 backdrop-blur-sm">
-                <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer gap-2">
-                    <Sun className="h-4 w-4" />
-                    Light
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer gap-2">
-                    <Moon className="h-4 w-4" />
-                    Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer gap-2">
-                    <Monitor className="h-4 w-4" />
-                    System
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
 function Header() {
     const { scrollY } = useScroll();
     const [isScrolled, setIsScrolled] = useState(false);
@@ -66,6 +37,8 @@ function Header() {
     useMotionValueEvent(scrollY, "change", (latest) => {
         setIsScrolled(latest > 50);
     });
+    
+    const { setTheme } = useTheme();
 
     return (
         <motion.header
@@ -79,8 +52,8 @@ function Header() {
         >
             <div className="container mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
-                    {/* Logo VynilTube */}
-                    <div onClick={()=>router.push('/')} className="flex items-center space-x-3">
+                    {/* Logo VynilTube cliquable vers accueil */}
+                    <div onClick={() => window.location.href = '/'} className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -106,10 +79,19 @@ function Header() {
                     <div className="flex items-center space-x-6">
                         <nav className="hidden md:flex space-x-8">
                             <motion.a
+                                href="/history"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium"
+                            >
+                                Historique
+                            </motion.a>
+                            <motion.a
                                 href="#features"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 }}
+                                transition={{ delay: 0.4 }}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium"
                             >
                                 L'expérience
@@ -118,7 +100,7 @@ function Header() {
                                 href="#how-it-works"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ delay: 0.3 }}
+                                transition={{ delay: 0.5 }}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium"
                             >
                                 L'alchimie
@@ -141,12 +123,17 @@ function Header() {
 
 function LandingContent() {
     const [mounted, setMounted] = useState(false);
+    const router = useRouter();
 
+    // Initialiser le service d'historique
+    useEffect(() => {
+        HistoryService.makeGlobal();
+    }, []);
 
     useEffect(() => {
         let t = setInterval(() => {
             setMounted(true);
-        }, 7000);
+        }, 3000);
         return () => {
            clearInterval(t)
         }

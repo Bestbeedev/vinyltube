@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { BACKEND_CONFIG, BACKEND_ENDPOINTS, getBackendUrl } from '@/config/backend';
+import HistoryService from '@/lib/history-service';
 
 export type VideoFormat = {
   itag: string;
@@ -29,6 +31,7 @@ export const useDownloadVideo = () => {
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [isDownloading, setIsDownloading] = useState(false); // État global pour suivre les téléchargements
 
   // Check backend status on mount
   useEffect(() => {
@@ -146,11 +149,14 @@ export const useDownloadVideo = () => {
     setLoading(true);
     setProgress(0);
     setError(null);
+    setIsDownloading(true); // Marquer qu'un téléchargement est en cours
 
     try {
       console.log('📥 Préparation téléchargement:', { itag, quality, url });
 
-      // Simulation de progression pour l'UX
+      const formatType = itag.includes('mp3') ? "audio" : "video";
+
+      // Progression simulée
       const progressInterval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) {
@@ -161,9 +167,6 @@ export const useDownloadVideo = () => {
         });
       }, 500);
 
-      const formatType = itag.includes('mp3') ? "audio" : "video";
-
-      // Appeler notre API qui communique avec le backend Python
       const res = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -185,6 +188,22 @@ export const useDownloadVideo = () => {
 
       console.log('✅ Téléchargement prêt:', data);
 
+      // Ajouter à l'historique local immédiatement
+      const historyItem = {
+        title: data.filename || videoInfo.title,
+        url: url,
+        format: formatType as 'video' | 'audio',
+        quality: quality,
+        size: data.fileSize || 'N/A',
+        duration: videoInfo.duration,
+        thumbnail: videoInfo.thumbnail
+      };
+      
+      // Ajouter immédiatement à l'historique via le service
+      HistoryService.addToHistory(historyItem);
+      
+      console.log('📝 Item ajouté à l\'historique via service:', historyItem);
+
       // Gérer la réponse du backend Python uniquement
       if (data.downloadUrl) {
         // Construire l'URL complète du backend pour le téléchargement
@@ -195,15 +214,20 @@ export const useDownloadVideo = () => {
         
         console.log('📥 URL de téléchargement complète:', fullDownloadUrl);
         
-        // Backend nous donne une URL de téléchargement direct
-        const link = document.createElement('a');
-        link.href = fullDownloadUrl;
-        link.download = data.filename || `video.${formatType === 'audio' ? 'mp3' : 'mp4'}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Ouvrir le téléchargement dans un nouvel onglet
+        window.open(fullDownloadUrl, '_blank');
         
+        // Afficher un toast de succès
         toast.success(`✅ Fichier "${data.filename}" téléchargé avec succès!`);
+        
+        // Attendre un peu plus longtemps pour s'assurer que le téléchargement commence
+        setTimeout(() => {
+          setIsDownloading(false); // Marquer le téléchargement comme terminé
+          if (typeof window !== 'undefined') {
+            window.location.href = '/history';
+          }
+        }, 5000); // 5 secondes pour laisser le temps au téléchargement de commencer
+        
       } else if (data.fileUrl) {
         // Construire l'URL complète du backend
         const backendBaseUrl = 'http://localhost:8000';
@@ -213,9 +237,20 @@ export const useDownloadVideo = () => {
         
         console.log('📂 URL du fichier complète:', fullFileUrl);
         
-        // Backend sert le fichier directement
+        // Ouvrir le fichier dans un nouvel onglet
         window.open(fullFileUrl, '_blank');
+        
+        // Afficher un toast de succès
         toast.success(`✅ Fichier prêt: ${data.filename}`);
+        
+        // Attendre un peu plus longtemps pour s'assurer que le téléchargement commence
+        setTimeout(() => {
+          setIsDownloading(false); // Marquer le téléchargement comme terminé
+          if (typeof window !== 'undefined') {
+            window.location.href = '/history';
+          }
+        }, 5000); // 5 secondes pour laisser le temps au téléchargement de commencer
+        
       } else {
         throw new Error("Aucune URL de téléchargement fournie par le backend");
       }
@@ -228,6 +263,10 @@ export const useDownloadVideo = () => {
     } finally {
       setLoading(false);
       setTimeout(() => setProgress(0), 2000);
+      // Ne pas réinitialiser isDownloading immédiatement en cas d'erreur
+      if (loading && !error) {
+        setTimeout(() => setIsDownloading(false), 3000);
+      }
     }
   };
 
@@ -290,6 +329,7 @@ export const useDownloadVideo = () => {
     progress,
     error,
     backendStatus,
+    isDownloading,
     extractVideoInfo,
     downloadVideo,
     downloadDirect,
