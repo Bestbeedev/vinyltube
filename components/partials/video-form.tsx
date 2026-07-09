@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Download, Video, AudioLinesIcon, Clock, User, HardDrive, Sparkles, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,7 +166,7 @@ export default function VideoForm() {
                         <div className="relative">
                             {videoInfo.thumbnail && (
                                 <div className="absolute inset-0 overflow-hidden rounded-t-xl">
-                                    <img src={videoInfo.thumbnail} alt="" className="w-full h-full object-cover blur-sm opacity-20" />
+                                    <Image src={videoInfo.thumbnail} alt="" fill className="object-cover blur-sm opacity-20" />
                                 </div>
                             )}
                             <div className="relative p-6 pb-4">
@@ -177,9 +178,11 @@ export default function VideoForm() {
                                 </DialogHeader>
                                 <div className="flex gap-4 mt-4">
                                     {videoInfo.thumbnail && (
-                                        <img
+                                        <Image
                                             src={videoInfo.thumbnail}
                                             alt="Miniature"
+                                            width={112}
+                                            height={64}
                                             className="w-28 h-16 object-cover rounded-lg flex-shrink-0 shadow-md"
                                         />
                                     )}

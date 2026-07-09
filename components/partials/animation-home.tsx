@@ -22,7 +22,7 @@ export default function HomeMotion() {
                     VynilTube
                 </span>
                 <div className="text-xs text-amber-600/80 dark:text-amber-400/80 font-medium -mt-1">
-                    préserver l'essentiel
+                    préserver l&apos;essentiel
                 </div>
             </motion.div>
             </div>

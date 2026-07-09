@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Play, Download, Archive, Scissors, Sparkles, GalleryVerticalEnd, ClipboardPaste, Settings, Zap, Library, Target, AudioLines, Gauge } from 'lucide-react';
-import { ThemeProvider, useTheme } from "next-themes";
+import { ThemeProvider } from "next-themes";
 import { Button } from "@/components/ui/button";
 import HomeMotion from '@/components/partials/animation-home';
 import ThemeToggle from '@/components/partials/theme-toggle';
-import { useRouter } from 'next/navigation';
 import VideoForm from '@/components/partials/video-form';
 import HistoryService from '@/lib/history-service';
 
@@ -73,7 +72,7 @@ function Header() {
                                 VynilTube
                             </span>
                             <div className="text-xs text-amber-600/80 dark:text-amber-400/80 font-medium -mt-1">
-                                préserver l'essentiel
+                                préserver l&apos;essentiel
                             </div>
                         </motion.div>
                     </div>
@@ -198,7 +197,7 @@ function LandingContent() {
                             Une expérience <span className="text-amber-600 dark:text-amber-400">consciente</span>
                         </h2>
                         <p className="text-lg text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto">
-                            Plus qu'un simple téléchargeur, un atelier numérique pour les esprits curieux
+                            Plus qu&apos;un simple téléchargeur, un atelier numérique pour les esprits curieux
                         </p>
                     </motion.div>
 
@@ -288,7 +287,7 @@ function LandingContent() {
                         initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.6 }}
                     >
                         <h2 className="text-4xl font-serif font-bold mb-4">
-                            L'alchimie <span className="text-amber-600 dark:text-amber-400">VynilTube</span>
+                            L&apos;alchimie <span className="text-amber-600 dark:text-amber-400">VynilTube</span>
                         </h2>
                         <p className="text-lg text-neutral-600 dark:text-neutral-300 mb-12 max-w-2xl mx-auto">
                             Un processus raffiné en quatre actes simples
@@ -301,7 +300,7 @@ function LandingContent() {
                     >
                         <div className="hidden md:block absolute top-12 left-1/4 right-1/4 h-0.5 bg-amber-200 dark:bg-amber-800/50 -z-10" />
                         {[
-                            { step: '01', title: 'Coller', desc: 'Le lien de n\'importe quelle plateforme', icon: ClipboardPaste, color: 'text-blue-500' },
+                            { step: '01', title: 'Coller', desc: "Le lien de n'importe quelle plateforme", icon: ClipboardPaste, color: 'text-blue-500' },
                             { step: '02', title: 'Sélectionner', desc: 'Format vidéo ou audio', icon: Settings, color: 'text-amber-500' },
                             { step: '03', title: 'Extraire', desc: 'Progression en temps réel', icon: Zap, color: 'text-emerald-500' },
                             { step: '04', title: 'Archiver', desc: 'Dans votre collection', icon: Library, color: 'text-purple-500' },
@@ -328,7 +327,7 @@ function LandingContent() {
                     className="max-w-3xl mx-auto text-center bg-gradient-to-r from-amber-400/10 to-amber-600/10 dark:from-amber-400/5 dark:to-amber-600/5 rounded-3xl p-16 border border-amber-200 dark:border-amber-800/30"
                 >
                     <h2 className="text-4xl font-serif font-bold mb-6">
-                        Prêt à collectionner <span className="text-amber-600 dark:text-amber-400">l'éphémère</span> ?
+                        Prêt à collectionner <span className="text-amber-600 dark:text-amber-400">l&apos;éphémère</span> ?
                     </h2>
                     <p className="text-xl text-neutral-600 dark:text-neutral-300 mb-8 max-w-xl mx-auto">
                         YouTube, TikTok, Vimeo, Instagram — tout ce qui compte, préservé hors-ligne.

@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 function ThemeToggle() {
-    const { setTheme, theme } = useTheme();
+    const { setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

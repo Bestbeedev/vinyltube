@@ -94,7 +94,7 @@ class HistoryService {
   // Rendre la fonction addToHistory disponible globalement
   static makeGlobal(): void {
     if (typeof window !== 'undefined') {
-      (window as any).addToHistory = this.addToHistory.bind(this);
+      (window as { addToHistory?: typeof HistoryService.addToHistory }).addToHistory = this.addToHistory.bind(this);
     }
   }
 }
