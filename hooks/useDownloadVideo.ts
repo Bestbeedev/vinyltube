@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { BACKEND_CONFIG } from '@/config/backend';
 import HistoryService from '@/lib/history-service';
@@ -26,6 +27,7 @@ export type VideoInfo = {
 };
 
 export const useDownloadVideo = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const [progress, setProgress] = useState<number>(0);
@@ -154,7 +156,7 @@ export const useDownloadVideo = () => {
                 : `${backendBaseUrl}/${rawUrl}`;
 
               HistoryService.addToHistory({
-                title: payload.filename || videoInfo.title,
+                title: videoInfo.title,
                 url,
                 format: formatType as 'video' | 'audio',
                 quality,
@@ -165,12 +167,8 @@ export const useDownloadVideo = () => {
 
               window.open(fullDownloadUrl, '_blank');
               toast.success(`✅ Fichier "${payload.filename}" prêt !`);
-
-              setTimeout(() => {
-                setIsDownloading(false);
-                if (typeof window !== 'undefined') window.location.href = '/history';
-              }, 3000);
-
+              setIsDownloading(false);
+              setTimeout(() => router.push('/history'), 1500);
               resolve();
             }
           } catch (parseErr) {

@@ -30,14 +30,7 @@ class HistoryService {
       const updatedHistory = [newItem, ...currentHistory].slice(0, this.MAX_ITEMS);
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedHistory));
-      
-      // Émettre un événement pour notifier les autres composants
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: this.STORAGE_KEY,
-        newValue: JSON.stringify(updatedHistory)
-      }));
-      
-      console.log('📝 Item ajouté à l\'historique:', newItem);
+      window.dispatchEvent(new CustomEvent('vinyltube-history-updated'));
     } catch (error) {
       console.error('Erreur ajout historique:', error);
     }
@@ -58,14 +51,7 @@ class HistoryService {
   static clearHistory(): void {
     try {
       localStorage.removeItem(this.STORAGE_KEY);
-      
-      // Émettre un événement pour notifier les autres composants
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: this.STORAGE_KEY,
-        newValue: null
-      }));
-      
-      console.log('🗑️ Historique vidé');
+      window.dispatchEvent(new CustomEvent('vinyltube-history-updated'));
     } catch (error) {
       console.error('Erreur vidage historique:', error);
     }
@@ -78,14 +64,7 @@ class HistoryService {
       const updatedHistory = currentHistory.filter(item => item.id !== id);
       
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedHistory));
-      
-      // Émettre un événement pour notifier les autres composants
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: this.STORAGE_KEY,
-        newValue: JSON.stringify(updatedHistory)
-      }));
-      
-      console.log('🗑️ Item supprimé de l\'historique:', id);
+      window.dispatchEvent(new CustomEvent('vinyltube-history-updated'));
     } catch (error) {
       console.error('Erreur suppression item:', error);
     }

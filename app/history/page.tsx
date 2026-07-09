@@ -15,10 +15,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import HistoryService, { HistoryItem } from '@/lib/history-service';
 
-const itemVariant = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-};
+// const itemVariant = {
+//   initial: { opacity: 0, y: 16 },
+//   animate: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
+// };
 
 const stagger = {
   animate: { transition: { staggerChildren: 0.06 } },
@@ -56,8 +56,15 @@ function HistoryPageContent() {
   useEffect(() => {
     const load = () => setHistory(HistoryService.getHistory());
     load();
+    // Même onglet (CustomEvent) + cross-page (storage natif) + retour sur la page (focus)
+    window.addEventListener('vinyltube-history-updated', load);
     window.addEventListener('storage', load);
-    return () => window.removeEventListener('storage', load);
+    window.addEventListener('focus', load);
+    return () => {
+      window.removeEventListener('vinyltube-history-updated', load);
+      window.removeEventListener('storage', load);
+      window.removeEventListener('focus', load);
+    };
   }, []);
 
   const clearHistory = () => {
@@ -92,7 +99,7 @@ function HistoryPageContent() {
   const totalSizeMB = history.reduce((acc, i) => acc + parseSizeMB(i.size), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-amber-50/30 to-neutral-100/80 dark:from-neutral-900 dark:via-amber-900/5 dark:to-neutral-800/95 text-neutral-900 dark:text-neutral-100">
+    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-700/50">
@@ -145,7 +152,7 @@ function HistoryPageContent() {
               { label: 'Audios', value: totalAudio, icon: AudioLines, color: 'text-green-500' },
               { label: 'Taille totale', value: `${totalSizeMB.toFixed(0)} MB`, icon: HardDrive, color: 'text-purple-500' },
             ].map((s, i) => (
-              <div key={i} className="flex items-center gap-3 p-4 bg-white/70 dark:bg-neutral-800/70 rounded-xl border border-neutral-100 dark:border-neutral-700">
+              <div key={i} className="flex items-center gap-3 p-4 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700">
                 <s.icon className={`w-5 h-5 ${s.color} flex-shrink-0`} />
                 <div>
                   <div className="text-lg font-bold text-neutral-800 dark:text-neutral-200">{s.value}</div>
@@ -192,7 +199,7 @@ function HistoryPageContent() {
 
         {/* Résultats */}
         {filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-24">
+          <motion.div initial={{ opacity: 1 }} animate={{ opacity: 1 }} className="text-center py-24">
             <Clock className="w-16 h-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" />
             <h3 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
               {searchQuery || filterFormat !== 'all' ? 'Aucun résultat' : 'Aucun historique'}
@@ -216,7 +223,7 @@ function HistoryPageContent() {
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
               : 'space-y-3'}>
             {filtered.map(item => (
-              <motion.div key={item.id} variants={itemVariant} whileHover={{ scale: 1.01 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
+              <motion.div key={item.id} whileHover={{ scale: 1.01 }} transition={{ duration: 0.3, ease: 'easeOut' }}>
                 {viewMode === 'grid' ? (
                   <GridCard item={item} onDelete={deleteItem} />
                 ) : (
@@ -260,11 +267,11 @@ function HistoryPageContent() {
 
 function GridCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string) => void }) {
   return (
-    <div className="group bg-white/90 dark:bg-neutral-800/90 rounded-2xl border border-neutral-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-lg transition-all duration-200 overflow-hidden">
+    <div className="group bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-lg transition-all duration-200 overflow-hidden">
       {/* Thumbnail */}
       <div className="relative h-36 bg-neutral-100 dark:bg-neutral-700 overflow-hidden">
         {item.thumbnail ? (
-          <Image src={item.thumbnail} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
+          <Image src={item.thumbnail} alt={item.title} loading="eager" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {item.format === 'video'
@@ -315,7 +322,7 @@ function GridCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string
 
 function ListCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string) => void }) {
   return (
-    <div className="group flex items-center gap-4 p-4 bg-white/90 dark:bg-neutral-800/90 rounded-xl border border-neutral-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200">
+    <div className="group flex items-center gap-4 p-4 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all duration-200">
       <div className="w-20 h-12 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-700 flex-shrink-0">
         {item.thumbnail ? (
           <Image src={item.thumbnail} alt={item.title} width={80} height={48} className="w-full h-full object-cover" />
