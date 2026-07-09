@@ -24,6 +24,18 @@ const SUPPORTED_PLATFORMS = [
     { name: 'SoundCloud', pattern: /soundcloud\.com/ },
 ];
 
+const UNSUPPORTED_PLATFORMS = [
+    { name: 'Instagram', pattern: /instagram\.com/ },
+    { name: 'Facebook', pattern: /facebook\.com|fb\.watch/ },
+];
+
+function detectUnsupported(url: string): string | null {
+    for (const p of UNSUPPORTED_PLATFORMS) {
+        if (p.pattern.test(url)) return p.name;
+    }
+    return null;
+}
+
 function detectPlatform(url: string): string | null {
     for (const p of SUPPORTED_PLATFORMS) {
         if (p.pattern.test(url)) return p.name;
@@ -42,9 +54,11 @@ export default function VideoForm() {
     const { loading, videoInfo, progress, backendStatus, isDownloading, extractVideoInfo, downloadVideo } = useDownloadVideo();
 
     const detectedPlatform = detectPlatform(url);
+    const unsupportedPlatform = detectUnsupported(url);
 
     useEffect(() => {
         if (url.trim() && isValidUrl(url) && !loading && !isAutoExtracting && !videoInfo) {
+            if (detectUnsupported(url)) return;
             const timer = setTimeout(async () => {
                 setIsAutoExtracting(true);
                 const success = await extractVideoInfo(url);
@@ -59,6 +73,10 @@ export default function VideoForm() {
         e.preventDefault();
         if (!url.trim() || !isValidUrl(url)) {
             toast.error("Veuillez entrer une URL valide.");
+            return;
+        }
+        if (unsupportedPlatform) {
+            toast.error(`${unsupportedPlatform} requiert une connexion — non supporté pour les utilisateurs anonymes.`);
             return;
         }
         const success = await extractVideoInfo(url);
@@ -142,6 +160,14 @@ export default function VideoForm() {
                 </div>
 
                 <div className="text-center mt-6 space-y-2">
+                    {unsupportedPlatform && (
+                        <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
+                            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                            <span className="text-sm text-red-700 dark:text-red-400">
+                                <strong>{unsupportedPlatform}</strong> n&apos;est pas supporté — un compte est requis pour accéder à ce contenu.
+                            </span>
+                        </div>
+                    )}
                     <div className="flex items-center justify-center gap-2">
                         <Badge className={`flex items-center space-x-1 ${statusColor}`}>
                             {statusIcon}

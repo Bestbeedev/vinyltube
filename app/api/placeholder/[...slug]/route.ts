@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { slug: string[] } }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
-  const slug = params.slug.join('/');
+  const { slug: slugParts } = await params;
+  const slug = slugParts.join('/');
   
   // Retourner une SVG placeholder selon le slug
   const svgPlaceholder = `

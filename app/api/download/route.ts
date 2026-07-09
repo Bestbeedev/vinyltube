@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
-import { getBackendUrl, BACKEND_CONFIG } from "@/config/backend";
+import { getBackendUrl } from "@/config/backend";
 
 export async function POST(req: Request) {
   try {

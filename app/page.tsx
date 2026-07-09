@@ -22,16 +22,16 @@ const scaleIn = {
 };
 
 const PLATFORMS = [
-    { name: 'YouTube', emoji: '▶️' },
-    { name: 'Vimeo', emoji: '🎬' },
-    { name: 'TikTok', emoji: '🎵' },
-    { name: 'Instagram', emoji: '📸' },
-    { name: 'Twitter / X', emoji: '🐦' },
-    { name: 'Dailymotion', emoji: '📺' },
-    { name: 'Twitch', emoji: '🎮' },
-    { name: 'Reddit', emoji: '🤖' },
-    { name: 'Facebook', emoji: '👥' },
-    { name: 'SoundCloud', emoji: '🎧' },
+    { name: 'YouTube', emoji: '▶️', supported: true },
+    { name: 'Vimeo', emoji: '🎬', supported: true },
+    { name: 'TikTok', emoji: '🎵', supported: true },
+    { name: 'Twitter / X', emoji: '🐦', supported: true },
+    { name: 'Dailymotion', emoji: '📺', supported: true },
+    { name: 'Twitch', emoji: '🎮', supported: true },
+    { name: 'Reddit', emoji: '🤖', supported: true },
+    { name: 'SoundCloud', emoji: '🎧', supported: true },
+    { name: 'Instagram', emoji: '📸', supported: false },
+    { name: 'Facebook', emoji: '👥', supported: false },
 ];
 
 function Header() {
@@ -85,7 +85,7 @@ function Header() {
                             </motion.a>
                             <motion.a href="#features" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium">
-                                L'expérience
+                                L&apos;expérience
                             </motion.a>
                             <motion.a href="#platforms" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium">
@@ -93,7 +93,7 @@ function Header() {
                             </motion.a>
                             <motion.a href="#how-it-works" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
                                 className="text-neutral-600 dark:text-neutral-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-medium">
-                                L'alchimie
+                                L&apos;alchimie
                             </motion.a>
                         </nav>
                         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}>
@@ -144,7 +144,7 @@ function LandingContent() {
                         </span>
                         <br />
                         <span className="text-neutral-700 dark:text-neutral-200">
-                            l'éphémère
+                            l&apos;éphémère
                         </span>
                     </motion.h1>
 
@@ -152,7 +152,7 @@ function LandingContent() {
                         initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                         className="text-xl text-neutral-600 dark:text-neutral-300 mb-12 max-w-2xl mx-auto leading-relaxed"
                     >
-                        Téléchargez vidéos et audios depuis n'importe quelle plateforme.
+                        Téléchargez vidéos et audios depuis n&apos;importe quelle plateforme.
                         Une expérience consciente pour ceux qui valorisent le contenu hors-ligne.
                     </motion.p>
 
@@ -264,10 +264,19 @@ function LandingContent() {
                     {PLATFORMS.map((p, i) => (
                         <motion.div
                             key={i} variants={scaleIn} whileHover={{ scale: 1.08, y: -4 }}
-                            className="flex flex-col items-center gap-2 p-4 bg-white/60 dark:bg-neutral-800/60 rounded-2xl border border-neutral-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200 cursor-default"
+                            className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200 cursor-default ${
+                                p.supported
+                                    ? 'bg-white/60 dark:bg-neutral-800/60 border-neutral-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md'
+                                    : 'bg-neutral-50/40 dark:bg-neutral-900/40 border-neutral-100/50 dark:border-neutral-800/50 opacity-50'
+                            }`}
                         >
                             <span className="text-2xl">{p.emoji}</span>
                             <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 text-center">{p.name}</span>
+                            {!p.supported && (
+                                <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400">
+                                    login requis
+                                </span>
+                            )}
                         </motion.div>
                     ))}
                 </motion.div>
@@ -338,7 +347,7 @@ function LandingContent() {
                         className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold transition-all inline-flex items-center space-x-3 shadow-lg hover:shadow-xl"
                     >
                         <Play className="w-5 h-5" />
-                        <span>Commencer l'expérience</span>
+                        <span>Commencer l&apos;expérience</span>
                     </motion.button>
                 </motion.div>
             </section>

@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ThemeProvider } from 'next-themes';
 import ThemeToggle from '@/components/partials/theme-toggle';
+import Link from 'next/link';
+import Image from 'next/image';
 import HistoryService, { HistoryItem } from '@/lib/history-service';
 
 const itemVariant = {
@@ -203,7 +205,7 @@ function HistoryPageContent() {
             {history.length === 0 && (
               <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800/30 max-w-sm mx-auto">
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  💡 Téléchargez une vidéo depuis la <a href="/" className="underline font-medium">page d'accueil</a> pour commencer.
+                  💡 Téléchargez une vidéo depuis la <Link href="/" className="underline font-medium">page d&apos;accueil</Link> pour commencer.
                 </p>
               </div>
             )}
@@ -239,7 +241,7 @@ function HistoryPageContent() {
                 <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-800 dark:text-neutral-200">Vider l'historique</h3>
+                <h3 className="font-semibold text-neutral-800 dark:text-neutral-200">Vider l&apos;historique</h3>
                 <p className="text-sm text-neutral-500">{history.length} entrées seront supprimées.</p>
               </div>
             </div>
@@ -262,7 +264,7 @@ function GridCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string
       {/* Thumbnail */}
       <div className="relative h-36 bg-neutral-100 dark:bg-neutral-700 overflow-hidden">
         {item.thumbnail ? (
-          <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <Image src={item.thumbnail} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {item.format === 'video'
@@ -314,10 +316,9 @@ function GridCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string
 function ListCard({ item, onDelete }: { item: HistoryItem; onDelete: (id: string) => void }) {
   return (
     <div className="group flex items-center gap-4 p-4 bg-white/90 dark:bg-neutral-800/90 rounded-xl border border-neutral-100 dark:border-neutral-700 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all duration-200">
-      {/* Thumbnail */}
       <div className="w-20 h-12 rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-700 flex-shrink-0">
         {item.thumbnail ? (
-          <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
+          <Image src={item.thumbnail} alt={item.title} width={80} height={48} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             {item.format === 'video'

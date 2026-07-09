@@ -5,10 +5,11 @@ import { getBackendUrl } from "@/config/backend";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { filename: string[] } }
+  { params }: { params: Promise<{ filename: string[] }> }
 ) {
   try {
-    const filename = params.filename.join('/');
+    const { filename: filenameParts } = await params;
+    const filename = filenameParts.join('/');
     
     if (!filename) {
       return NextResponse.json({ error: "Nom de fichier requis" }, { status: 400 });
