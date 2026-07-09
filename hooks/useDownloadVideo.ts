@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { BACKEND_CONFIG, BACKEND_ENDPOINTS, getBackendUrl } from '@/config/backend';
+import { BACKEND_CONFIG } from '@/config/backend';
 import HistoryService from '@/lib/history-service';
 
 export type VideoFormat = {
@@ -22,7 +22,7 @@ export type VideoInfo = {
   url: string;
   videoId?: string;
   warning?: string;
-  hasFormats?: boolean; // Indique si les formats ont été chargés
+  hasFormats?: boolean;
 };
 
 export const useDownloadVideo = () => {
@@ -31,29 +31,17 @@ export const useDownloadVideo = () => {
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking'>('checking');
-  const [isDownloading, setIsDownloading] = useState(false); // État global pour suivre les téléchargements
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // Check backend status on mount
   useEffect(() => {
-    const checkBackendStatus = async () => {
-      try {
-        const res = await fetch('/api/health');
-        if (res.ok) {
-          setBackendStatus('online');
-        } else {
-          setBackendStatus('offline');
-        }
-      } catch (error) {
-        setBackendStatus('offline');
-      }
-    };
-
-    checkBackendStatus();
+    fetch('/api/health')
+      .then(res => setBackendStatus(res.ok ? 'online' : 'offline'))
+      .catch(() => setBackendStatus('offline'));
   }, []);
 
   const extractVideoInfo = async (url: string): Promise<boolean> => {
     if (!url.trim()) {
-      toast.error("Veuillez entrer un lien YouTube valide.");
+      toast.error("Veuillez entrer une URL valide.");
       return false;
     }
 
@@ -63,9 +51,6 @@ export const useDownloadVideo = () => {
     setProgress(0);
 
     try {
-      console.log('� Extraction rapide des informations pour:', url);
-
-      // Étape 1: Extraction rapide des infos de base
       const fastResponse = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,33 +59,18 @@ export const useDownloadVideo = () => {
 
       if (!fastResponse.ok) {
         const errorData = await fastResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || "Impossible d'analyser cette vidéo YouTube");
+        throw new Error(errorData.error || "Impossible d'analyser cette vidéo");
       }
 
       const fastData = await fastResponse.json();
-      
-      // Créer les infos de base avec formats vides
-      const baseVideoData: VideoInfo = {
-        ...fastData,
-        url: url,
-        formats: [], // Formats vides initialement
-        hasFormats: false
-      };
-
-      setVideoInfo(baseVideoData);
-      console.log(`✅ Infos rapides extraites: "${fastData.title}"`);
-      
-      // Étape 2: Charger les formats en arrière-plan
-      console.log('🔄 Chargement des formats complets en arrière-plan...');
-      loadFormatsInBackground(url);
-      
+      setVideoInfo({ ...fastData, url, formats: [], hasFormats: false });
       toast.success(`🎬 Vidéo détectée: ${fastData.title}`);
+      loadFormatsInBackground(url);
       return true;
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
       setError(message);
-      console.error('❌ Erreur extraction:', err);
       toast.error(message);
       return false;
     } finally {
@@ -110,32 +80,20 @@ export const useDownloadVideo = () => {
 
   const loadFormatsInBackground = async (url: string) => {
     try {
-      console.log('⏳ Extraction des formats complets pour:', url);
-      
       const fullResponse = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
 
-      if (!fullResponse.ok) {
-        throw new Error("Erreur lors du chargement des formats");
-      }
+      if (!fullResponse.ok) throw new Error("Erreur lors du chargement des formats");
 
       const fullData = await fullResponse.json();
-      
-      // Mettre à jour les videoInfo avec les formats complets
-      setVideoInfo(prev => prev ? {
-        ...prev,
-        formats: fullData.formats || [],
-        hasFormats: true
-      } : null);
-      
-      console.log(`✅ Formats chargés: ${fullData.formats?.length || 0} formats disponibles`);
-      toast.success(`🎯 ${fullData.formats?.length || 0} formats de téléchargement disponibles`);
-      
-    } catch (error) {
-      console.error('❌ Erreur chargement formats:', error);
+      setVideoInfo(prev => prev ? { ...prev, formats: fullData.formats || [], hasFormats: true } : null);
+      toast.success(`🎯 ${fullData.formats?.length || 0} formats disponibles`);
+
+    } catch (err) {
+      console.error('Erreur chargement formats:', err);
       toast.warning('⚠️ Impossible de charger les formats de téléchargement');
     }
   };
@@ -149,170 +107,92 @@ export const useDownloadVideo = () => {
     setLoading(true);
     setProgress(0);
     setError(null);
-    setIsDownloading(true); // Marquer qu'un téléchargement est en cours
+    setIsDownloading(true);
 
     try {
-      console.log('📥 Préparation téléchargement:', { itag, quality, url });
+      const format = videoInfo.formats.find(f => f.itag === itag);
+      const formatType = format ? (format.hasVideo ? "video" : "audio") : (itag.includes('mp3') ? "audio" : "video");
 
-      const formatType = itag.includes('mp3') ? "audio" : "video";
-
-      // Progression simulée
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + Math.random() * 10;
-        });
-      }, 500);
-
+      // 1. Démarrer le job côté backend
       const res = await fetch("/api/download", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: url,
-          itag: itag,
-          format: formatType
-        }),
+        body: JSON.stringify({ url, itag, format: formatType }),
       });
 
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        throw new Error(data.error || "Erreur de préparation du téléchargement");
+        throw new Error(data.error || "Erreur de démarrage du téléchargement");
       }
 
-      clearInterval(progressInterval);
-      setProgress(100);
+      const { job_id } = data;
 
-      console.log('✅ Téléchargement prêt:', data);
+      // 2. Suivre la progression via SSE
+      await new Promise<void>((resolve, reject) => {
+        const es = new EventSource(`/api/download/progress/${job_id}`);
 
-      // Ajouter à l'historique local immédiatement
-      const historyItem = {
-        title: data.filename || videoInfo.title,
-        url: url,
-        format: formatType as 'video' | 'audio',
-        quality: quality,
-        size: data.fileSize || 'N/A',
-        duration: videoInfo.duration,
-        thumbnail: videoInfo.thumbnail
-      };
-      
-      // Ajouter immédiatement à l'historique via le service
-      HistoryService.addToHistory(historyItem);
-      
-      console.log('📝 Item ajouté à l\'historique via service:', historyItem);
+        es.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
 
-      // Gérer la réponse du backend Python uniquement
-      if (data.downloadUrl) {
-        // Construire l'URL complète du backend pour le téléchargement
-        const backendBaseUrl = 'http://localhost:8000';
-        const fullDownloadUrl = data.downloadUrl.startsWith('/') 
-          ? `${backendBaseUrl}${data.downloadUrl}`
-          : `${backendBaseUrl}/${data.downloadUrl}`;
-        
-        console.log('📥 URL de téléchargement complète:', fullDownloadUrl);
-        
-        // Ouvrir le téléchargement dans un nouvel onglet
-        window.open(fullDownloadUrl, '_blank');
-        
-        // Afficher un toast de succès
-        toast.success(`✅ Fichier "${data.filename}" téléchargé avec succès!`);
-        
-        // Attendre un peu plus longtemps pour s'assurer que le téléchargement commence
-        setTimeout(() => {
-          setIsDownloading(false); // Marquer le téléchargement comme terminé
-          if (typeof window !== 'undefined') {
-            window.location.href = '/history';
+            if (payload.error) {
+              es.close();
+              reject(new Error(payload.error));
+              return;
+            }
+
+            setProgress(payload.progress ?? 0);
+
+            if (payload.status === 'done') {
+              es.close();
+
+              const backendBaseUrl = BACKEND_CONFIG.BASE_URL;
+              const rawUrl: string = payload.downloadUrl ?? '';
+              const fullDownloadUrl = rawUrl.startsWith('/')
+                ? `${backendBaseUrl}${rawUrl}`
+                : `${backendBaseUrl}/${rawUrl}`;
+
+              HistoryService.addToHistory({
+                title: payload.filename || videoInfo.title,
+                url,
+                format: formatType as 'video' | 'audio',
+                quality,
+                size: payload.fileSize || 'N/A',
+                duration: videoInfo.duration,
+                thumbnail: videoInfo.thumbnail,
+              });
+
+              window.open(fullDownloadUrl, '_blank');
+              toast.success(`✅ Fichier "${payload.filename}" prêt !`);
+
+              setTimeout(() => {
+                setIsDownloading(false);
+                if (typeof window !== 'undefined') window.location.href = '/history';
+              }, 3000);
+
+              resolve();
+            }
+          } catch (parseErr) {
+            es.close();
+            reject(parseErr);
           }
-        }, 5000); // 5 secondes pour laisser le temps au téléchargement de commencer
-        
-      } else if (data.fileUrl) {
-        // Construire l'URL complète du backend
-        const backendBaseUrl = 'http://localhost:8000';
-        const fullFileUrl = data.fileUrl.startsWith('/') 
-          ? `${backendBaseUrl}${data.fileUrl}`
-          : `${backendBaseUrl}/${data.fileUrl}`;
-        
-        console.log('📂 URL du fichier complète:', fullFileUrl);
-        
-        // Ouvrir le fichier dans un nouvel onglet
-        window.open(fullFileUrl, '_blank');
-        
-        // Afficher un toast de succès
-        toast.success(`✅ Fichier prêt: ${data.filename}`);
-        
-        // Attendre un peu plus longtemps pour s'assurer que le téléchargement commence
-        setTimeout(() => {
-          setIsDownloading(false); // Marquer le téléchargement comme terminé
-          if (typeof window !== 'undefined') {
-            window.location.href = '/history';
-          }
-        }, 5000); // 5 secondes pour laisser le temps au téléchargement de commencer
-        
-      } else {
-        throw new Error("Aucune URL de téléchargement fournie par le backend");
-      }
+        };
+
+        es.onerror = () => {
+          es.close();
+          reject(new Error("Connexion SSE perdue"));
+        };
+      });
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur lors du téléchargement";
       setError(message);
-      console.error('❌ Erreur téléchargement:', err);
       toast.error(message);
+      setIsDownloading(false);
     } finally {
       setLoading(false);
       setTimeout(() => setProgress(0), 2000);
-      // Ne pas réinitialiser isDownloading immédiatement en cas d'erreur
-      if (loading && !error) {
-        setTimeout(() => setIsDownloading(false), 3000);
-      }
-    }
-  };
-
-  const downloadDirect = async (url: string, itag: string, quality: string) => {
-    // Méthode alternative plus directe - backend uniquement
-    const formatType = itag.includes('mp3') ? "audio" : "video";
-    
-    try {
-      const res = await fetch(`/api/download?url=${encodeURIComponent(url)}&format=${formatType}`);
-      const data = await res.json();
-      
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Erreur lors du téléchargement direct");
-      }
-      
-      if (data.fileUrl) {
-        // Construire l'URL complète du backend
-        const backendBaseUrl = 'http://localhost:8000';
-        const fullFileUrl = data.fileUrl.startsWith('/') 
-          ? `${backendBaseUrl}${data.fileUrl}`
-          : `${backendBaseUrl}/${data.fileUrl}`;
-        
-        // Téléchargement direct depuis notre backend
-        window.open(fullFileUrl, '_blank');
-        toast.success(`✅ Fichier prêt: ${data.filename}`);
-      } else if (data.downloadUrl) {
-        // Construire l'URL complète du backend
-        const backendBaseUrl = 'http://localhost:8000';
-        const fullDownloadUrl = data.downloadUrl.startsWith('/') 
-          ? `${backendBaseUrl}${data.downloadUrl}`
-          : `${backendBaseUrl}/${data.downloadUrl}`;
-        
-        const link = document.createElement('a');
-        link.href = fullDownloadUrl;
-        link.download = data.filename || `video.${formatType === 'audio' ? 'mp3' : 'mp4'}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success(`✅ Fichier "${data.filename}" téléchargé avec succès!`);
-      } else {
-        throw new Error("Aucune URL de téléchargement fournie par le backend");
-      }
-    } catch (error) {
-      console.error('Erreur download direct:', error);
-      const message = error instanceof Error ? error.message : "Erreur lors du téléchargement direct";
-      toast.error(message);
     }
   };
 
@@ -321,6 +201,7 @@ export const useDownloadVideo = () => {
     setError(null);
     setProgress(0);
     setLoading(false);
+    setIsDownloading(false);
   };
 
   return {
@@ -332,7 +213,6 @@ export const useDownloadVideo = () => {
     isDownloading,
     extractVideoInfo,
     downloadVideo,
-    downloadDirect,
-    reset
+    reset,
   };
 };

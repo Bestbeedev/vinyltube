@@ -1,12 +1,7 @@
 // Configuration du backend Python
 export const BACKEND_CONFIG = {
-  // URL du backend Python (à adapter selon ta configuration)
-  BASE_URL: 'http://localhost:8000',
-  
-  // Timeout en millisecondes
-  TIMEOUT: 300000, // 5 minutes pour les téléchargements
-  
-  // Configuration des formats supportés
+  BASE_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000',
+  TIMEOUT: Number(process.env.BACKEND_TIMEOUT) || 300000,
   SUPPORTED_FORMATS: {
     VIDEO: ['mp4', 'webm', 'mkv'],
     AUDIO: ['mp3', 'wav', 'aac', 'ogg']
